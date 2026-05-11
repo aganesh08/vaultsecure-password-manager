@@ -145,11 +145,9 @@ class MFAWindow(QWidget):
             return
 
         if verify_totp(self.secret, token):
-            print("DEBUG: MFA verified successfully")
             self.success_callback()
             self.close()
         else:
-            print("DEBUG: MFA verification failed")
             QMessageBox.critical(self, "MFA Failed", "Invalid MFA token. Please try again.")
             self.token_input.clear()
             self.token_input.setFocus()
