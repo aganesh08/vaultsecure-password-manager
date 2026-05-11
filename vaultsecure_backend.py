@@ -293,8 +293,16 @@ def store_password(username, service, password, encryption_key):
         conn.close()
         return False, "You cannot reuse your last 3 passwords for this service."
     
-    c.execute("INSERT INTO vault (user_id, service, encrypted_password, last_updated) VALUES (?, ?, ?, ?)",
-              (user_id, service, encrypted, now))
+    if exists:
+        c.execute(
+            "UPDATE vault SET encrypted_password = ?, last_updated = ? WHERE user_id = ? AND service = ?",
+            (encrypted, now, user_id, service)
+        )
+    else:
+        c.execute(
+            "INSERT INTO vault (user_id, service, encrypted_password, last_updated) VALUES (?, ?, ?, ?)",
+            (user_id, service, encrypted, now)
+        )
     conn.commit()
     conn.close()
     
