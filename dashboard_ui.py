@@ -508,15 +508,12 @@ class DashboardWindow(QWidget):
         }
         timezone_combo.addItems(list(timezone_map.keys()))
 
-        # Load user's current timezone
-        conn = sqlite3.connect('vaultsecure.db')
-        c = conn.cursor()
-        c.execute("SELECT timezone FROM users WHERE username = ?", (self.username,))
-        row = c.fetchone()
-        conn.close()
-        if row and row[0]:
+        # Load user's current timezone via the backend to avoid bypassing
+        # shared DB access logic and test patching.
+        current_timezone = get_user_timezone(self.username)
+        if current_timezone:
             for display, value in timezone_map.items():
-                if value == row[0]:
+                if value == current_timezone:
                     idx = timezone_combo.findText(display)
                     if idx >= 0:
                         timezone_combo.setCurrentIndex(idx)
