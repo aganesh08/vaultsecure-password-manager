@@ -1,4 +1,3 @@
-import datetime
 def evaluate_password_strength(password):
     has_upper = any(c.isupper() for c in password)
     has_digit = any(c.isdigit() for c in password)
