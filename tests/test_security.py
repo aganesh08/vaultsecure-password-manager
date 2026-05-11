@@ -18,8 +18,6 @@ original_sqlite3_connect = sqlite3.connect
 
 try:
     import vaultsecure_backend
-    from Crypto.Cipher import AES
-    from Crypto.Protocol.KDF import PBKDF2
 except ImportError as e:
     print(f"Error importing modules: {e}")
     print("Make sure all required modules are available")
