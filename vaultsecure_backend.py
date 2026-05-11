@@ -165,7 +165,7 @@ def create_tables():
     # Check if timezone column exists, add if not
     if 'timezone' not in columns:
         print("Adding timezone column to existing users table...")
-        c.execute('ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT "America/Los_Angeles"')
+        c.execute("ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'America/Los_Angeles'")
     
     # Create vault table
     c.execute('''CREATE TABLE IF NOT EXISTS vault (
