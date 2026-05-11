@@ -103,8 +103,25 @@ def get_totp(secret):
 def verify_totp(secret, token):
     if not secret:
         return False  # MFA secret missing
+
+    if token is None:
+        return False
+
+    try:
+        normalized_token = str(token).strip()
+    except (TypeError, ValueError):
+        return False
+
+    # pyotp TOTP tokens are expected to be numeric and match the configured digit length.
+    # Reject malformed input here so invalid user/test input does not raise during verify().
     totp = pyotp.TOTP(secret)
-    return totp.verify(token)
+    if not normalized_token.isdigit() or len(normalized_token) != totp.digits:
+        return False
+
+    try:
+        return totp.verify(normalized_token)
+    except (TypeError, ValueError):
+        return False
 
 def get_mfa_secret(username):
     conn = sqlite3.connect('vaultsecure.db')
