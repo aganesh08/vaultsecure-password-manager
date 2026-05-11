@@ -252,9 +252,6 @@ class VaultManager(QWidget):
                 QMessageBox.warning(self, "Cancelled", "No new password provided.")
                 restore_row()
                 return
-            if any(char in new_pw for char in [";", "'", '"', "--", "\\"]):
-                QMessageBox.warning(self, "Invalid Password", "Password contains invalid characters.")
-                return
             strength, _ = evaluate_password_strength(new_pw)
             if strength != "Strong":
                 QMessageBox.warning(self, "Weak Password", "Only strong passwords can be set.")
