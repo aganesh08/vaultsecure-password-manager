@@ -19,8 +19,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont, QColor
 from PyQt5.QtCore import Qt
-from vaultsecure_backend import retrieve_passwords, store_password, authenticate_user
-import sqlite3
+from vaultsecure_backend import retrieve_passwords, store_password, authenticate_user, get_user_timezone
 
 # --- Timezone abbreviation mapping ---
 TIMEZONE_ABBR = {
@@ -117,12 +116,7 @@ class VaultManager(QWidget):
         self.refresh_table()
 
     def get_user_timezone(self):
-        conn = sqlite3.connect('vaultsecure.db')
-        c = conn.cursor()
-        c.execute("SELECT timezone FROM users WHERE username = ?", (self.username,))
-        row = c.fetchone()
-        conn.close()
-        return row[0] if row and row[0] else "America/Los_Angeles"
+        return get_user_timezone(self.username)
     
     def format_datetime_user_tz(self, dt_str):
         from datetime import datetime
