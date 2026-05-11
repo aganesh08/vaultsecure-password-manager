@@ -591,8 +591,15 @@ def change_master_password(username, old_pw, new_pw):
         return False, "Authentication failed."
     
     # Validate new password strength
-    if len(new_pw) < 8:
-        return False, "New password must be at least 8 characters long."
+    has_lower = any(ch.islower() for ch in new_pw)
+    has_upper = any(ch.isupper() for ch in new_pw)
+    has_digit = any(ch.isdigit() for ch in new_pw)
+    has_special = any(not ch.isalnum() for ch in new_pw)
+    if len(new_pw) < 12 or not (has_lower and has_upper and has_digit and has_special):
+        return False, (
+            "New password must be at least 12 characters long and include uppercase, "
+            "lowercase, numeric, and special characters."
+        )
     
     conn = sqlite3.connect('vaultsecure.db')
     c = conn.cursor()
