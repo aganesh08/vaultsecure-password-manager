@@ -6,29 +6,42 @@ import hashlib
 import base64
 import os
 import secrets
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 # --- AES256 Encryption Utilities ---
 class AESCipher:
     def __init__(self, key):
-        self.key = hashlib.sha256(key.encode()).digest()
+        self.password = key.encode('utf-8')
+        self.salt_size = 16
+        self.nonce_size = 12
+        self.iterations = 100000
+
+    def _derive_key(self, salt):
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=salt,
+            iterations=self.iterations,
+        )
+        return kdf.derive(self.password)
 
     def encrypt(self, raw):
         raw = raw.encode('utf-8')
-        iv = os.urandom(16)
-        cipher = Cipher(algorithms.AES(self.key), modes.CFB(iv), backend=default_backend())
-        encryptor = cipher.encryptor()
-        encrypted = encryptor.update(raw) + encryptor.finalize()
-        return base64.b64encode(iv + encrypted).decode('utf-8')
+        salt = os.urandom(self.salt_size)
+        nonce = os.urandom(self.nonce_size)
+        key = self._derive_key(salt)
+        encrypted = AESGCM(key).encrypt(nonce, raw, None)
+        return base64.b64encode(salt + nonce + encrypted).decode('utf-8')
 
     def decrypt(self, enc):
         enc = base64.b64decode(enc)
-        iv = enc[:16]
-        encrypted = enc[16:]
-        cipher = Cipher(algorithms.AES(self.key), modes.CFB(iv), backend=default_backend())
-        decryptor = cipher.decryptor()
-        decrypted = decryptor.update(encrypted) + decryptor.finalize()
+        salt = enc[:self.salt_size]
+        nonce = enc[self.salt_size:self.salt_size + self.nonce_size]
+        encrypted = enc[self.salt_size + self.nonce_size:]
+        key = self._derive_key(salt)
+        decrypted = AESGCM(key).decrypt(nonce, encrypted, None)
         return decrypted.decode('utf-8')
 
 # --- Secure Password Hashing with Salt ---
