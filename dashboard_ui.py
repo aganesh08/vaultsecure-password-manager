@@ -39,6 +39,8 @@ class RestoreBackupDialog(QDialog):
     def get_user_timezone(self):
         from vaultsecure_backend import get_user_timezone
         return get_user_timezone(self.username)
+
+    def format_datetime_user_tz(self, dt_str):
         from datetime import datetime
         user_tz = self.get_user_timezone()
         abbr = TIMEZONE_ABBR.get(user_tz, user_tz)
