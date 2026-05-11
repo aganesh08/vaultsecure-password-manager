@@ -414,7 +414,15 @@ def retrieve_passwords(username, encryption_key):
             return []
         c.execute("SELECT service, encrypted_password, last_updated FROM vault WHERE user_id = ?", (user_id[0],))
         rows = c.fetchall()
-        return [(service, cipher.decrypt(enc_pw), last_updated) for service, enc_pw, last_updated in rows]
+        results = []
+        for service, enc_pw, last_updated in rows:
+            try:
+                decrypted = cipher.decrypt(enc_pw)
+                results.append((service, decrypted, last_updated))
+            except Exception:
+                # Skip rows that cannot be decrypted (wrong key or corrupted data)
+                continue
+        return results
     finally:
         conn.close()
 
@@ -444,6 +452,8 @@ def delete_password(username, service, encryption_key):
     backup_vault(user_id, encryption_key)
     return True, "Password deleted successfully."
 
+MAX_BACKUPS_PER_USER = 10
+
 def backup_vault(user_id, encryption_key):
     import json
     # Fetch all vault entries for the user
@@ -452,18 +462,27 @@ def backup_vault(user_id, encryption_key):
     c.execute("SELECT service, encrypted_password, last_updated FROM vault WHERE user_id = ?", (user_id,))
     rows = c.fetchall()
     conn.close()
-    
-    # Serialize data
+
+    # Serialize and encrypt the backup data
     data = json.dumps(rows).encode('utf-8')
-    
-    # Encrypt the backup data
     cipher = AESCipher(encryption_key)
     encrypted_data = cipher.encrypt(data.decode('utf-8')).encode('utf-8')
-    
-    # Store in backups table
+
+    # Store new backup and prune old ones beyond MAX_BACKUPS_PER_USER
     conn = sqlite3.connect('vaultsecure.db')
     c = conn.cursor()
     c.execute("INSERT INTO backups (user_id, backup_data) VALUES (?, ?)", (user_id, encrypted_data))
+    # Delete oldest rows that exceed the retention limit
+    c.execute("""
+        DELETE FROM backups
+        WHERE user_id = ?
+          AND id NOT IN (
+              SELECT id FROM backups
+              WHERE user_id = ?
+              ORDER BY backup_time DESC
+              LIMIT ?
+          )
+    """, (user_id, user_id, MAX_BACKUPS_PER_USER))
     conn.commit()
     conn.close()
 
@@ -516,6 +535,40 @@ def restore_vault_from_backup(username, encryption_key, backup_id=None):
     # Log restore activity
     log_activity(user_id, "vault", "restored")
     return True, "Vault restored from backup."
+
+def get_recent_activity_log(username, limit=5):
+    """Return recent activity log entries for a user as a list of (service, action, timestamp)."""
+    conn = sqlite3.connect('vaultsecure.db')
+    c = conn.cursor()
+    c.execute("""
+        SELECT service, action, timestamp
+        FROM activity_log
+        WHERE user_id = (SELECT id FROM users WHERE username = ?)
+        ORDER BY timestamp DESC
+        LIMIT ?
+    """, (username, limit))
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+
+def get_last_backup_time_raw(username):
+    """Return the most recent backup_time string for a user, or None if no backups exist."""
+    conn = sqlite3.connect('vaultsecure.db')
+    c = conn.cursor()
+    try:
+        c.execute("""
+            SELECT backup_time FROM backups
+            WHERE user_id = (SELECT id FROM users WHERE username = ?)
+            ORDER BY backup_time DESC LIMIT 1
+        """, (username,))
+        row = c.fetchone()
+    except Exception:
+        row = None
+    finally:
+        conn.close()
+    return row[0] if row and row[0] else None
+
 
 def list_backups(username):
     conn = sqlite3.connect('vaultsecure.db')

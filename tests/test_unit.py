@@ -86,11 +86,13 @@ class TestVaultSecureBackend(unittest.TestCase):
         
         # Replace the connect function directly in the module
         vaultsecure_backend.sqlite3.connect = test_connect
-        
-        # Also patch backup_vault to prevent issues
+
+        # Also patch backup_vault to prevent issues; save original so tearDown can restore it
+        self._original_backup_vault = vaultsecure_backend.backup_vault
+
         def mock_backup_vault(*args, **kwargs):
             pass
-        
+
         vaultsecure_backend.backup_vault = mock_backup_vault
         
         # Create tables using the patched database
@@ -105,6 +107,8 @@ class TestVaultSecureBackend(unittest.TestCase):
         # Restore original functions
         import vaultsecure_backend
         vaultsecure_backend.sqlite3.connect = original_sqlite3_connect
+        if hasattr(self, '_original_backup_vault'):
+            vaultsecure_backend.backup_vault = self._original_backup_vault
     
     def test_register_user_success(self):
         """Test successful user registration"""

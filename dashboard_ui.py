@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 import sqlite3
 
 from vault_ui import VaultManager
-from vaultsecure_backend import retrieve_passwords
+from vaultsecure_backend import retrieve_passwords, get_user_timezone, get_recent_activity_log, get_last_backup_time_raw
 
 # --- Timezone abbreviation mapping ---
 TIMEZONE_ABBR = {
@@ -37,14 +37,8 @@ class RestoreBackupDialog(QDialog):
         self.setLayout(layout)
     
     def get_user_timezone(self):
-        conn = sqlite3.connect('vaultsecure.db')
-        c = conn.cursor()
-        c.execute("SELECT timezone FROM users WHERE username = ?", (self.username,))
-        row = c.fetchone()
-        conn.close()
-        return row[0] if row and row[0] else "America/Los_Angeles"
-    
-    def format_datetime_user_tz(self, dt_str):
+        from vaultsecure_backend import get_user_timezone
+        return get_user_timezone(self.username)
         from datetime import datetime
         user_tz = self.get_user_timezone()
         abbr = TIMEZONE_ABBR.get(user_tz, user_tz)
@@ -416,19 +410,8 @@ class DashboardWindow(QWidget):
             return 0
 
     def get_recent_activity(self, limit=5):
-        conn = sqlite3.connect('vaultsecure.db')
-        c = conn.cursor()
-        c.execute("""
-            SELECT service, action, timestamp
-            FROM activity_log
-            WHERE user_id = (SELECT id FROM users WHERE username = ?)
-            ORDER BY timestamp DESC
-            LIMIT ?
-        """, (self.username, limit))
-        rows = c.fetchall()
-        conn.close()
         activity = []
-        for service, action, timestamp in rows:
+        for service, action, timestamp in get_recent_activity_log(self.username, limit):
             if action == "created":
                 msg = f"New service entry for {service}"
             elif action == "updated":
@@ -444,30 +427,13 @@ class DashboardWindow(QWidget):
         return activity
 
     def get_last_backup_time(self):
-        try:
-            from zoneinfo import ZoneInfo
-        except ImportError:
-            from pytz import timezone
-        conn = sqlite3.connect('vaultsecure.db')
-        c = conn.cursor()
-        c.execute("""
-            SELECT backup_time FROM backups
-            WHERE user_id = (SELECT id FROM users WHERE username = ?)
-            ORDER BY backup_time DESC LIMIT 1
-        """, (self.username,))
-        row = c.fetchone()
-        conn.close()
-        if row and row[0]:
-            return self.format_datetime_user_tz(row[0])
+        raw = get_last_backup_time_raw(self.username)
+        if raw:
+            return self.format_datetime_user_tz(raw)
         return "Never"
     
     def get_user_timezone(self):
-        conn = sqlite3.connect('vaultsecure.db')
-        c = conn.cursor()
-        c.execute("SELECT timezone FROM users WHERE username = ?", (self.username,))
-        row = c.fetchone()
-        conn.close()
-        return row[0] if row and row[0] else "America/Los_Angeles"
+        return get_user_timezone(self.username)
 
     def format_datetime_user_tz(self, dt_str):
         from datetime import datetime
