@@ -396,14 +396,18 @@ def delete_password(username, service, encryption_key):
         conn.close()
         return False, "User not found."
     user_id = user_id[0]
-    
-    # Log activity before deleting
-    log_activity(user_id, service, "deleted")
-    
+
     c.execute("DELETE FROM vault WHERE user_id = ? AND service = ?", (user_id, service))
+    if c.rowcount == 0:
+        conn.close()
+        return False, "Password not found."
+
     conn.commit()
     conn.close()
-    
+
+    # Log activity after a successful delete
+    log_activity(user_id, service, "deleted")
+
     # Backup after change
     backup_vault(user_id, encryption_key)
     return True, "Password deleted successfully."
