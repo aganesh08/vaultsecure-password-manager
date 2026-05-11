@@ -45,10 +45,10 @@ class TestIntegrationFlows(unittest.TestCase):
         self.test_db.close()
         self.db_path = self.test_db.name
         
-        # Patch database connection
+        # Patch database connection to return a fresh connection per call
         self.db_patcher = patch('vaultsecure_backend.sqlite3.connect')
         self.mock_connect = self.db_patcher.start()
-        self.mock_connect.return_value = sqlite3.connect(self.db_path)
+        self.mock_connect.side_effect = lambda *args, **kwargs: sqlite3.connect(self.db_path)
         
         vaultsecure_backend.create_tables()
         
