@@ -1,0 +1,49 @@
+# Core GUI Framework
+PyQt5>=5.15.0,<5.16.0
+PyQt5-Qt5>=5.15.0,<5.16.0
+PyQt5-sip>=12.13.0,<13.0.0
+
+# Cryptography and Security
+pycryptodome>=3.19.0,<4.0.0
+pyotp>=2.9.0,<3.0.0
+qrcode[pil]>=7.4.0,<8.0.0
+
+# Password Security
+bcrypt>=4.1.0,<5.0.0
+cryptography>=43.0.0,<46.0.0
+
+# Testing Framework
+pytest>=7.4.0,<8.0.0
+pytest-qt>=4.2.0,<5.0.0
+pytest-mock>=3.12.0,<4.0.0
+pytest-cov>=4.1.0,<5.0.0
+pytest-xvfb>=3.0.0,<4.0.0
+
+# Security Testing
+bandit>=1.7.0,<2.0.0
+safety>=2.3.0,<3.0.0
+
+# Code Quality
+flake8>=6.1.0,<7.0.0
+black>=23.11.0,<24.0.0
+isort>=5.12.0,<6.0.0
+
+# Development Tools
+setuptools>=69.0.0
+wheel>=0.42.0
+pip-tools>=7.3.0,<8.0.0
+
+# For advanced testing
+selenium>=4.15.0,<5.0.0
+requests>=2.31.0,<3.0.0
+psutil>=5.9.0,<6.0.0
+
+# Image processing (for QR codes)
+Pillow>=10.1.0,<11.0.0
+
+# Additional security libraries
+passlib>=1.7.4,<2.0.0
+argon2-cffi>=23.1.0,<24.0.0
+
+# Optional: For performance monitoring
+memory-profiler>=0.61.0,<1.0.0

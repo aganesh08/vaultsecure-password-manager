@@ -1,0 +1,10 @@
+# Run all tests
+python run_tests.py
+
+# Run specific test suite
+python run_tests.py unit
+python run_tests.py integration
+python run_tests.py security
+
+# Get help
+python run_tests.py help
