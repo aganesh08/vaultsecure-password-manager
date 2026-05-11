@@ -376,15 +376,17 @@ def is_password_reused(user_id, service, new_password):
 def retrieve_passwords(username, encryption_key):
     cipher = AESCipher(encryption_key)
     conn = sqlite3.connect('vaultsecure.db')
-    c = conn.cursor()
-    c.execute("SELECT id FROM users WHERE username = ?", (username,))
-    user_id = c.fetchone()
-    if not user_id:
-        return []
-    c.execute("SELECT service, encrypted_password, last_updated FROM vault WHERE user_id = ?", (user_id[0],))
-    rows = c.fetchall()
-    conn.close()
-    return [(service, cipher.decrypt(enc_pw), last_updated) for service, enc_pw, last_updated in rows]
+    try:
+        c = conn.cursor()
+        c.execute("SELECT id FROM users WHERE username = ?", (username,))
+        user_id = c.fetchone()
+        if not user_id:
+            return []
+        c.execute("SELECT service, encrypted_password, last_updated FROM vault WHERE user_id = ?", (user_id[0],))
+        rows = c.fetchall()
+        return [(service, cipher.decrypt(enc_pw), last_updated) for service, enc_pw, last_updated in rows]
+    finally:
+        conn.close()
 
 def delete_password(username, service, encryption_key):
     service = normalize_service(service)
