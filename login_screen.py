@@ -94,6 +94,13 @@ class LoginScreen(QWidget):
                 return
             QMessageBox.critical(self, "Login Failed", "Invalid username or password.")
             return
+
+        if not mfa_secret:
+            if self.main_window is not None:
+                self.main_window.show_dashboard(user, pw)
+            else:
+                self.login_successful.emit(user, pw)
+            return
         
         # Hide login screen before showing MFA
         self.hide()
