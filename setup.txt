@@ -1,0 +1,56 @@
+Steps to setup a testing environment to run the password manager application
+
+1. setup a python virtual environment
+a. unzip the zip file
+b. open a terminal 
+c. cd into the directory that holds the project folder
+d. Commands:
+
+ cd vaultsecure-password-manager
+
+# Create the Virtual Environment
+ python3 -m venv venv
+
+# Activate the Virtual Environment - mac
+source venv/bin/activate
+
+# Activate the Virtual Environment - windows command prompt
+venv\Scripts\activate
+
+Once activated, you’ll see (venv) in your terminal prompt.
+
+# Install Required Packages
+pip install -r requirements.txt
+
+# Run the application
+python main.py
+
+2. Since you're using the app for the first time you must register your user
+
+# if you try to login with non-existent user creds, you will be redirected to the register Packages
+
+3. Enter a username and password
+
+4. this will generate a QR code to setup MFA, available MFA tools:
+- google authenticator
+- microsoft authenticator
+
+5. once registered you will be redirected to the login page, input setup login creds + enter MFA code
+
+6. You should now see the dashboard.
+
+7. the left hand menu has password management capabilities for CRUD operations
+
+8. input the service name you are saving a password for, and the password itself
+
+9. live password strength checks are built into the add function - only strong passwords can be added.
+
+10. you can view, update, and delete passwords added to the vault - must reauthenticate with your user credentials to complete the operation
+
+11. on the settings page (nav from left dashboard menu) you can:
+    a. change the application timezone view
+    b. update your master password
+    c. restore from backup by backup ID
+
+
+
