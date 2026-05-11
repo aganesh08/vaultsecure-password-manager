@@ -3,6 +3,7 @@ import datetime
 import sqlite3
 import pyotp
 import hashlib
+import hmac
 import base64
 import os
 import secrets
@@ -80,8 +81,9 @@ def verify_password(password, stored_salt, stored_hash):
             100000
         )
         
-        # Compare with stored hash (convert stored hash from hex)
-        return hashed.hex() == stored_hash
+        # Compare with stored hash in constant time
+        stored_hash_bytes = bytes.fromhex(stored_hash)
+        return hmac.compare_digest(hashed, stored_hash_bytes)
     
     except (ValueError, TypeError):
         # Handle invalid hex strings or other errors
@@ -111,6 +113,14 @@ def get_mfa_secret(username):
     row = c.fetchone()
     conn.close()
     return row[0] if row else None
+
+def get_user_timezone(username, default_timezone="America/Los_Angeles"):
+    conn = sqlite3.connect('vaultsecure.db')
+    c = conn.cursor()
+    c.execute("SELECT timezone FROM users WHERE username = ?", (username,))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row and row[0] else default_timezone
 
 # --- Database Setup ---
 def create_tables():
@@ -342,6 +352,9 @@ def update_password(username, service, new_password, encryption_key):
     # Update password in vault
     c.execute("UPDATE vault SET encrypted_password = ?, last_updated = ? WHERE user_id = ? AND service = ?",
               (encrypted, now, user_id, service))
+    if c.rowcount == 0:
+        conn.close()
+        return False, "Service not found for this user."
     conn.commit()
     conn.close()
     
