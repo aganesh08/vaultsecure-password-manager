@@ -3,6 +3,7 @@ from PyQt5.QtGui import QPixmap, QFont
 from PyQt5.QtCore import Qt
 import qrcode
 import urllib.parse
+import io
 from vaultsecure_backend import register_user
 
 class RegisterScreen(QWidget):
@@ -144,9 +145,10 @@ class RegisterScreen(QWidget):
         
         # Generate and display QR code with appropriate size
         qr = qrcode.make(url)
-        path = "temp_qr.png"
-        qr.save(path)
-        pixmap = QPixmap(path)
+        buffer = io.BytesIO()
+        qr.save(buffer, format="PNG")
+        pixmap = QPixmap()
+        pixmap.loadFromData(buffer.getvalue(), "PNG")
         # Scale the QR code to a reasonable size
         scaled_pixmap = pixmap.scaled(200, 200, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.qr_label.setPixmap(scaled_pixmap)
