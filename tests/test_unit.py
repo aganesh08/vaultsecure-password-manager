@@ -123,16 +123,10 @@ class TestVaultSecureBackend(unittest.TestCase):
             success1, result1 = register_user("testuser", "password123")
             self.assertTrue(success1, "First registration should succeed")
             
-            # Second registration with same username
+            # Second registration with same username should be rejected
             success2, result2 = register_user("testuser", "password456")
-            
-            # Your backend allows duplicates, so this should succeed
-            if success2:
-                print("Info: Backend allows duplicate usernames")
-                self.assertTrue(user_exists("testuser"))
-            else:
-                self.assertFalse(success2)
-                self.assertIn("already exists", result2.lower())
+            self.assertFalse(success2, "Duplicate registration should fail")
+            self.assertIn("already exists", result2.lower())
         except Exception as e:
             self.fail(f"test_register_user_duplicate raised exception: {e}")
     
