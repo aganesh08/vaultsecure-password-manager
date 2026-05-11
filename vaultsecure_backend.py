@@ -385,23 +385,34 @@ def update_password(username, service, new_password, encryption_key):
     backup_vault(user_id, encryption_key)
     return True, "Password updated successfully."
 
+def password_history_hash(password):
+    history_secret = os.environ.get("PASSWORD_HISTORY_SECRET")
+    if not history_secret:
+        raise RuntimeError("PASSWORD_HISTORY_SECRET must be set for secure password history checks.")
+    return hmac.new(
+        history_secret.encode("utf-8"),
+        password.encode("utf-8"),
+        hashlib.sha256
+    ).hexdigest()
+
 def store_password_history(user_id, service, password):
     service = normalize_service(service)
     conn = sqlite3.connect('vaultsecure.db')
     c = conn.cursor()
     c.execute("INSERT INTO password_history (user_id, service, password_hash) VALUES (?, ?, ?)",
-              (user_id, service, hash_password(password)))
+              (user_id, service, password_history_hash(password)))
     conn.commit()
     conn.close()
 
 def is_password_reused(user_id, service, new_password):
+    service = normalize_service(service)
     conn = sqlite3.connect('vaultsecure.db')
     c = conn.cursor()
     c.execute("SELECT password_hash FROM password_history WHERE user_id = ? AND service = ? ORDER BY changed_at DESC LIMIT 3",
               (user_id, service))
     last_hashes = [row[0] for row in c.fetchall()]
     conn.close()
-    return hash_password(new_password) in last_hashes
+    return password_history_hash(new_password) in last_hashes
 
 def retrieve_passwords(username, encryption_key):
     cipher = AESCipher(encryption_key)
