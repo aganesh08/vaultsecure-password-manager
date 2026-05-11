@@ -395,23 +395,23 @@ class DashboardWindow(QWidget):
         return sum(1 for _, pw, _ in passwords if evaluate_password_strength(pw)[0] == "Weak")
 
     def get_old_password_count(self, days=90):
-        conn = sqlite3.connect('vaultsecure.db')
-        c = conn.cursor()
-        c.execute("SELECT id FROM users WHERE username = ?", (self.username,))
-        user_id = c.fetchone()
-        if not user_id:
-            return 0
-        user_id = user_id[0]
         try:
-            c.execute("SELECT last_updated FROM vault WHERE user_id = ?", (user_id,))
-            rows = c.fetchall()
-            from datetime import datetime, timedelta
-            cutoff = datetime.now() - timedelta(days=days)
-            old_count = 0
-            for (last_updated,) in rows:
-                if last_updated and datetime.fromisoformat(last_updated) < cutoff:
-                    old_count += 1
-            return old_count
+            with sqlite3.connect('vaultsecure.db') as conn:
+                c = conn.cursor()
+                c.execute("SELECT id FROM users WHERE username = ?", (self.username,))
+                user_id = c.fetchone()
+                if not user_id:
+                    return 0
+                user_id = user_id[0]
+                c.execute("SELECT last_updated FROM vault WHERE user_id = ?", (user_id,))
+                rows = c.fetchall()
+                from datetime import datetime, timedelta
+                cutoff = datetime.now() - timedelta(days=days)
+                old_count = 0
+                for (last_updated,) in rows:
+                    if last_updated and datetime.fromisoformat(last_updated) < cutoff:
+                        old_count += 1
+                return old_count
         except Exception:
             return 0
 
