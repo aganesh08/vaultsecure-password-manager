@@ -45,7 +45,7 @@ python main.py
 
 9. live password strength checks are built into the add function - only strong passwords can be added.
 
-10. you can view, update, and delete passwords added to the vault - must reauthenciate with your user credentials to complete the operation
+10. you can view, update, and delete passwords added to the vault - must reauthenticate with your user credentials to complete the operation
 
 11. on the settings page (nav from left dashboard menu) you can:
     a. change the application timezone view
